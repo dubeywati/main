@@ -1,0 +1,41 @@
+name: main
+
+on:
+  #pull_request:
+  push:
+  
+jobs:  
+  build: 
+    
+    runs-on: ubuntu-latest
+    steps:
+    
+    - uses: mdecoleman/pr-branch-name@1.2.0
+      id: vars
+      with:
+        repo-token: ${{ secrets.PAT_TOKEN }}
+    - run: echo ${{ steps.vars.outputs.branch }}
+    
+    - name: Checkout  
+      uses: actions/checkout@v1
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x   
+       
+    - name: Executing Regression Tests 
+      uses: convictional/trigger-workflow-and-wait@v1.6.5
+      with:
+        owner: dubeywati
+        repo: test
+        github_token: ${{ secrets.PAT_TOKEN }}
+        github_user: dubeywati
+        workflow_file_name: main.yml
+        ref: master
+        wait_interval: 10
+        client_payload: '{"branch_name":"${{ steps.vars.outputs.branch }}"}'
+        propagate_failure: true
+        trigger_workflow: true
+        wait_workflow: true
+        comment_downstream_url: ${{ github.event.pull_request.comments_url }} 
