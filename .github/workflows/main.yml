@@ -5,7 +5,7 @@ on:
     branches:
         - 'main'
         - 'master'
-  #push:
+  push:
   
 jobs:  
   build: 
