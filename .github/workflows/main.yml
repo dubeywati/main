@@ -14,15 +14,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: mdecoleman/pr-branch-name@1.2.0
-        id: vars
-        with:
-          repo-token: ${{ secrets.PAT_TOKEN }}
-
-      - name: Determine Event Type
-        id: determine-event-type
-        run: echo "EVENT_TYPE=$(if [[ -n '${{ github.event.pull_request.number }}' ]]; then echo 'pull_request'; else echo 'push'; fi)" >> $GITHUB_ENV
-
       - name: Checkout
         uses: actions/checkout@v2
 
@@ -30,6 +21,10 @@ jobs:
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: 6.0.x
+
+      - name: Determine Event Type
+        id: determine-event-type
+        run: echo "EVENT_TYPE=$(if [[ -n '${{ github.event.pull_request.number }}' ]]; then echo 'pull_request'; else echo 'push'; fi)" >> $GITHUB_ENV
 
       - name: Executing Regression Tests
         uses: convictional/trigger-workflow-and-wait@v1.6.5
@@ -43,7 +38,7 @@ jobs:
           wait_interval: 10
           client_payload: |
             {
-              "branch_name": "${{ steps.vars.outputs.branch }}",
+              "branch_name": "${{ github.ref }}",
               "EVENT_TYPE": "${{ env.EVENT_TYPE }}",
               "PR_ISSUE_NUMBER": "${{ github.event.pull_request.number }}",
               "PR_REPO_OWNER": "${{ github.repository_owner }}",
