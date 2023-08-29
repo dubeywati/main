@@ -1,14 +1,11 @@
-name: Push and Pull Request Workflow
+name: main
 
 on:
   pull_request:
     branches:
       - 'main'
       - 'master'
-  push:
-    branches:
-      - 'main'
-      - 'master'
+
 
 jobs:
   build:
@@ -18,10 +15,7 @@ jobs:
         id: vars
         with:
           repo-token: ${{ secrets.PAT_TOKEN }}
-
-      - name: Determine Event Type
-        id: determine-event-type
-        run: echo "EVENT_TYPE=$(if [[ -n '${{ github.event.pull_request.number }}' ]]; then echo 'pull_request'; else echo 'push'; fi)" >> $GITHUB_ENV
+      - run: echo ${{ steps.vars.outputs.branch }}
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -34,17 +28,18 @@ jobs:
       - name: Executing Regression Tests
         uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
-          owner: dubeywati
-          repo: test
+          owner: ClareAI
+          repo: wati_test_automation
           github_token: ${{ secrets.PAT_TOKEN }}
           github_user: dubeywati
-          workflow_file_name: main.yml
+          workflow_file_name: TestBuildAndRun.yml
           ref: ${{ github.ref }}
           wait_interval: 10
           client_payload: |
             {
               "branch_name": "${{ steps.vars.outputs.branch }}",
-              "EVENT_TYPE": "${{ env.EVENT_TYPE }}",
+              "EVENT_TYPE": "${{ github.event_name }}",
+              "EVENT_NUMBER": "${{ github.run_number }}",
               "PR_ISSUE_NUMBER": "${{ github.event.pull_request.number }}",
               "PR_REPO_OWNER": "${{ github.repository_owner }}",
               "PR_REPO_NAME": "${{ github.event.repository.name }}"
