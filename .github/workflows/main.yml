@@ -42,7 +42,7 @@ jobs:
             {
               "branch_name": "${{ steps.vars.outputs.branch }}",
               "EVENT_TYPE": "${{ github.event_name }}",
-              
+              "PR_ISSUE_NUMBER": "${{ github.event.pull_request ? github.event.pull_request.number : '' }}",
               "PR_REPO_OWNER": "${{ github.repository_owner }}",
               "PR_REPO_NAME": "${{ github.event.repository.name }}"
             }
