@@ -1,4 +1,4 @@
-name: main
+name: Push and Pull Request Workflow
 
 on:
   pull_request:
@@ -18,10 +18,13 @@ jobs:
         id: vars
         with:
           repo-token: ${{ secrets.PAT_TOKEN }}
-      - run: echo ${{ steps.vars.outputs.branch }}
+
+      - name: Determine Event Type
+        id: determine-event-type
+        run: echo "EVENT_TYPE=$(if [[ -n '${{ github.event.pull_request.number }}' ]]; then echo 'pull_request'; else echo 'push'; fi)" >> $GITHUB_ENV
 
       - name: Checkout
-        uses: actions/checkout@v2  # Use the latest version of the checkout action
+        uses: actions/checkout@v2
 
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v2
@@ -41,8 +44,8 @@ jobs:
           client_payload: |
             {
               "branch_name": "${{ steps.vars.outputs.branch }}",
-              "EVENT_TYPE": "${{ github.event_name }}",
-              "PR_ISSUE_NUMBER": "${{ github.event.pull_request ? github.event.pull_request.number : '' }}",
+              "EVENT_TYPE": "${{ env.EVENT_TYPE }}",
+              "PR_ISSUE_NUMBER": "${{ github.event.pull_request.number }}",
               "PR_REPO_OWNER": "${{ github.repository_owner }}",
               "PR_REPO_NAME": "${{ github.event.repository.name }}"
             }
