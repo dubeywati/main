@@ -47,7 +47,7 @@ jobs:
         owner: dubeywati
         repo: test
         github_token: ${{ secrets.PAT_TOKEN }}
-        github_user: dubeywati
+        github_user: dubeywati 
         workflow_file_name: main.yml
         ref: main
         wait_interval: 10
