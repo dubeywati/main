@@ -32,7 +32,7 @@ jobs:
         repo: test
         github_token: ${{ secrets.PAT_TOKEN }}
         github_user: dubeywati
-        workflow_file_name: trail.yml
+        workflow_file_name: main1.yml
         ref: feature
         wait_interval: 10
         client_payload: '{"branch_name":"${{ steps.vars.outputs.branch }}","PR_ISSUE_NUMBER": "${{ github.event.pull_request.number }}", "PR_REPO_OWNER": "${{ github.repository_owner }}", "PR_REPO_NAME": "${{  github.event.repository.name }}"}'
