@@ -23,7 +23,7 @@ jobs:
               exit 0
             elif [ "$total_count" -eq 1 ]; then
               head_branch=$(echo "$api_response" | jq -r '.workflow_runs[0].head_branch')
-               current_branch="${{ steps.vars.outputs.branch }}"
+              current_branch="${{ github.ref }}"
               echo "Head Branch of Previous PR Workflow: $head_branch"
               echo "Current Branch of This Workflow: $current_branch"
 
