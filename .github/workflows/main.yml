@@ -17,8 +17,8 @@ jobs:
             previous_run_url=$(curl -s "https://api.github.com/repos/dubeywati/main/actions/runs?event=pull_request&per_page=1" | jq -r '.workflow_runs[0].html_url')
             echo "Previous PR Workflow URL: $previous_run_url"
 
-            status=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "$previous_run_url" | jq -r '.status')
-            conclusion=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "$previous_run_url" | jq -r '.conclusion')
+            status=$(curl  -H "Authorization: token ${{ secrets.PAT_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "$previous_run_url" | jq -r '.status')
+            conclusion=$(curl  -H "Authorization: token ${{ secrets.PAT_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "$previous_run_url" | jq -r '.conclusion')
             
             if [ "$status" == "completed" ] || [ "$conclusion" == "failure" ] || [ "$conclusion" == "cancelled" ]; then
               echo "Previous PR workflow has completed, failed, or cancelled."
