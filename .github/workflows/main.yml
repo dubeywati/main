@@ -7,7 +7,8 @@ on:
       - 'master'
 
 jobs:
-    wait-for-previous:
+    
+  wait-for-previous:
     runs-on: ubuntu-latest
     steps:
       - name: Check Previous PR Workflow Status
@@ -41,6 +42,7 @@ jobs:
           done
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+
   build:
     runs-on: ubuntu-latest
     needs: [wait-for-previous]
