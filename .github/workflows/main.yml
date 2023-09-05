@@ -7,6 +7,36 @@ on:
       - 'master'
 
 jobs:
+  wait-for-previous:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Previous PR Workflow Status
+        id: check-status
+        run: |
+          previous_run_url=$(curl -s "https://api.github.com/repos/${{ github.repository }}/actions/runs?event=pull_request&status=success&per_page=1" | jq -r '.workflow_runs[0].html_url')
+          echo "Previous PR Workflow URL: $previous_run_url"
+
+          if [[ -z "$previous_run_url" ]]; then
+            echo "No previous PR workflow found."
+            exit 0
+          else
+            echo "Waiting for the previous PR workflow to complete..."
+            while [[ $(curl -s "$previous_run_url" | jq -r '.conclusion') == "null" ]]; do
+              echo "Previous PR workflow is still in progress. Waiting..."
+              sleep 30
+            done
+
+            conclusion=$(curl -s "$previous_run_url" | jq -r '.conclusion')
+            if [[ "$conclusion" == "success" ]]; then
+              echo "Previous PR workflow completed successfully."
+            else
+              echo "Previous PR workflow did not succeed. Exiting..."
+              exit 1
+            fi
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+
   build:
     runs-on: ubuntu-latest
     needs: [wait-for-previous]
@@ -26,26 +56,6 @@ jobs:
         with:
           dotnet-version: 6.0.x
 
-      - name: Check Previous PR Workflow Status
-        id: check-status
-        run: |
-          previous_run_url=$(curl -s "https://api.github.com/repos/${{ github.repository }}/actions/runs?event=pull_request&status=success&per_page=1" | jq -r '.workflow_runs[0].html_url')
-          echo "Previous PR Workflow URL: $previous_run_url"
-
-          if [[ -z "$previous_run_url" ]]; then
-            echo "No previous PR workflow found."
-            exit 0
-          else
-            echo "Waiting for the previous PR workflow to complete..."
-            while [[ $(curl -s "$previous_run_url" | jq -r '.status') == "in_progress" ]]; do
-              echo "Previous PR workflow is still in progress. Waiting..."
-              sleep 30
-            done
-            echo "Previous PR workflow completed successfully."
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-
       - name: Executing Regression Tests for LIVE ENV
         uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
@@ -61,15 +71,3 @@ jobs:
           trigger_workflow: true
           wait_workflow: true
           comment_downstream_url: ${{ github.event.pull_request.comments_url }}
-
-  wait-for-previous:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: 14
-
-      - name: Install jq
-        run: sudo apt-get install jq -y
-
