@@ -16,18 +16,18 @@ jobs:
           previous_run_url=$(curl -s "https://api.github.com/repos/${{ github.repository }}/actions/runs?event=pull_request&status=success&per_page=1" | jq -r '.workflow_runs[0].html_url')
           echo "Previous PR Workflow URL: $previous_run_url"
 
-          if [[ -z "$previous_run_url" ]]; then
+          if [ -z "$previous_run_url" ]; then
             echo "No previous PR workflow found."
             exit 0
           else
             echo "Waiting for the previous PR workflow to complete..."
-            while [[ $(curl -s "$previous_run_url" | jq -r '.conclusion') == "null" ]]; do
+            while [ "$(curl -s "$previous_run_url" | jq -r '.conclusion')" == "null" ]; do
               echo "Previous PR workflow is still in progress. Waiting..."
               sleep 30
             done
 
             conclusion=$(curl -s "$previous_run_url" | jq -r '.conclusion')
-            if [[ "$conclusion" == "success" ]]; then
+            if [ "$conclusion" == "success" ]; then
               echo "Previous PR workflow completed successfully."
             else
               echo "Previous PR workflow did not succeed. Exiting..."
