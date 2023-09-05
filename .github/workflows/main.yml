@@ -8,17 +8,22 @@ jobs:
   build_LIVE:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: mdecoleman/pr-branch-name@1.2.0
+        id: vars
+        with:
+          repo-token: ${{ secrets.PAT_TOKEN }}
+      - run: echo ${{ steps.vars.outputs.branch }}
+      
+      - name: Checkout  
+        uses: actions/checkout@v1
+        with:
+          ref: ${{ steps.vars.outputs.branch }}
 
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 6.0.x
-
-      - name: Get Branch Name
-        id: vars
-        run: echo ${{ steps.vars.outputs.branch }}
+      
 
       - name: Trigger Regression Tests for LIVE ENV
         uses: convictional/trigger-workflow-and-wait@v1.6.5
