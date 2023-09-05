@@ -24,12 +24,14 @@ jobs:
           echo "Waiting for the previous PR workflow to complete..."
           while true; do
             conclusion=$(curl -s "$previous_run_url" | jq -r '.conclusion')
-            if [ "$conclusion" == "success" ]; then
-              echo "Previous PR workflow completed successfully."
-              exit 0
-            elif [ "$conclusion" == "failure" ] || [ "$conclusion" == "cancelled" ]; then
-              echo "Previous PR workflow did not succeed. Exiting..."
-              exit 1
+            if [ "$conclusion" != "null" ]; then
+              if [ "$conclusion" == "success" ]; then
+                echo "Previous PR workflow completed successfully."
+                exit 0
+              else
+                echo "Previous PR workflow did not succeed. Exiting..."
+                exit 1
+              fi
             else
               echo "Previous PR workflow is still in progress. Waiting..."
               sleep 30
