@@ -7,36 +7,40 @@ on:
       - 'master'
 
 jobs:
-  wait-for-previous:
+    wait-for-previous:
     runs-on: ubuntu-latest
     steps:
       - name: Check Previous PR Workflow Status
         id: check-status
         run: |
-          previous_run_url=$(curl -s "https://api.github.com/repos/${{ github.repository }}/actions/runs?event=pull_request&status=in_progress,queued&per_page=1" | jq -r '.workflow_runs[0].html_url')
+          api_response=$(curl -s "https://api.github.com/repos/${{ github.repository }}/actions/runs?event=pull_request&status=in_progress,queued&per_page=1")
+          total_count=$(echo "$api_response" | jq -r '.total_count')
+          echo "Total Count of Previous PR Workflows: $total_count"
+
+          if [ "$total_count" -eq 0 ]; then
+            echo "No previous PR workflows found in progress or queued."
+            exit 0
+          fi
+
+          previous_run_url=$(echo "$api_response" | jq -r '.workflow_runs[0].html_url')
           echo "Previous PR Workflow URL: $previous_run_url"
 
-          if [ -z "$previous_run_url" ]; then
-            echo "No previous PR workflow found in progress or queued."
-          else
-            echo "Waiting for the previous PR workflow to complete..."
-            while true; do
-              status=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" "$previous_run_url" | jq -r '.status')
-              if [ "$status" == "completed" ]; then
-                echo "Previous PR workflow has completed."
-                exit 0
-              elif [ "$status" == "in_progress" ] || [ "$status" == "queued" ]; then
-                echo "Previous PR workflow is still in progress or queued. Waiting..."
-                sleep 30
-              else
-                echo "Previous PR workflow has an unexpected status: $status. Exiting..."
-                exit 1
-              fi
-            done
-          fi
+          echo "Waiting for the previous PR workflow to complete..."
+          while true; do
+            status=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" "$previous_run_url" | jq -r '.status')
+            if [ "$status" == "completed" ]; then
+              echo "Previous PR workflow has completed."
+              exit 0
+            elif [ "$status" == "in_progress" ] || [ "$status" == "queued" ]; then
+              echo "Previous PR workflow is still in progress or queued. Waiting..."
+              sleep 30
+            else
+              echo "Previous PR workflow has an unexpected status: $status. Exiting..."
+              exit 1
+            fi
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-
   build:
     runs-on: ubuntu-latest
     needs: [wait-for-previous]
