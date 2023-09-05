@@ -118,6 +118,7 @@ jobs:
           ref: feature
           wait_interval: 10
           client_payload: '{"branch_name":"${{ needs.common_setup.outputs.vars.outputs.branch }}","PR_ISSUE_NUMBER": "${{ github.event.pull_request.number }}", "PR_REPO_OWNER": "${{ github.repository_owner }}", "PR_REPO_NAME": "${{ github.event.repository.name }}"}'
+
           trigger_workflow: true
           wait_workflow: true
           comment_downstream_url: ${{ github.event.pull_request.comments_url }}
