@@ -19,21 +19,22 @@ jobs:
           if [ -z "$previous_run_url" ]; then
             echo "No previous PR workflow found."
             exit 0
-          else
-            echo "Waiting for the previous PR workflow to complete..."
-            while [ "$(curl -s "$previous_run_url" | jq -r '.conclusion')" == "null" ]; do
-              echo "Previous PR workflow is still in progress. Waiting..."
-              sleep 30
-            done
+          fi
 
+          echo "Waiting for the previous PR workflow to complete..."
+          while true; do
             conclusion=$(curl -s "$previous_run_url" | jq -r '.conclusion')
             if [ "$conclusion" == "success" ]; then
               echo "Previous PR workflow completed successfully."
-            else
+              exit 0
+            elif [ "$conclusion" == "failure" ] || [ "$conclusion" == "cancelled" ]; then
               echo "Previous PR workflow did not succeed. Exiting..."
               exit 1
+            else
+              echo "Previous PR workflow is still in progress. Waiting..."
+              sleep 30
             fi
-          fi
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
