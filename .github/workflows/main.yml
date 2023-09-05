@@ -21,6 +21,16 @@ jobs:
             if [ "$total_count" -eq 0 ]; then
               echo "No previous PR workflows found in progress or queued."
               exit 0
+            elif [ "$total_count" -eq 1 ]; then
+              head_branch=$(echo "$api_response" | jq -r '.workflow_runs[0].head_branch')
+              current_branch="${{ github.ref }}"
+              echo "Head Branch of Previous PR Workflow: $head_branch"
+              echo "Current Branch of This Workflow: $current_branch"
+
+              if [ "$head_branch" == "$current_branch" ]; then
+                echo "Head branch matches the current branch. Exiting..."
+                exit 0
+              fi
             fi
 
             echo "Waiting for the previous PR workflows to complete..."
