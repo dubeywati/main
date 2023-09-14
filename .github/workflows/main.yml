@@ -23,9 +23,9 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 6.0.x
-      
 
       - name: Trigger Regression Tests for LIVE ENV
+        id: live
         uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
           owner: dubeywati
@@ -60,6 +60,7 @@ jobs:
           dotnet-version: 6.0.x
 
       - name: Trigger Regression Tests for Trail ENV
+        id: trail
         uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
           owner: dubeywati
@@ -74,20 +75,26 @@ jobs:
           trigger_workflow: true
           wait_workflow: true
           comment_downstream_url: ${{ github.event.pull_request.comments_url }}
-          
+
 # Add the following step at the end of your workflow
+  comment_on_failure:
+    needs: [build_LIVE, build_Trail]  # Wait for the other jobs to complete
+    runs-on: ubuntu-latest
+    if: failure()  # Only execute this step if any of the previous jobs fail
+    env:
+      GH_PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+    steps:
+      - name: Combine Error Messages
+        run: |
+          LIVE_ERROR=$(echo "${{ steps.live.outputs.client_payload }}" | jq -r '.error_message')
+          TRAIL_ERROR=$(echo "${{ steps.trail.outputs.client_payload }}" | jq -r '.error_message')
+          COMMENT="Your workflow failed.\n\nLIVE ENV Error:\n$LIVE_ERROR\n\nTRAIL ENV Error:\n$TRAIL_ERROR"
+          echo "$COMMENT" > comment.txt
       - name: Comment on PR on failure
-        if: failure()  # Only execute this step if the job fails
-        env:
-          GH_PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           PR_NUMBER="${{ github.event.pull_request.number }}"
-
-          
-
-          COMMENT="Your workflow failed. Here's why: Add your comment here."
+          COMMENT=$(cat comment.txt)
           curl -s -X POST -H "Authorization: token $GH_PAT_TOKEN" -d "{\"body\":\"$COMMENT\"}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"
-
 
 
 # name: Regression Tests
