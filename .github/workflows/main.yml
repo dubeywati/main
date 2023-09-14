@@ -81,15 +81,9 @@ jobs:
         env:
           GH_PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          PR_NUMBER=$(curl -s -X GET -H "Authorization: token $PAT_TOKEN" "https://api.github.com/repos/dubeywati/main/pulls?head=dubeywati-patch-166&state=open" | jq -r '.number')
-          API_RESPONSE=$(curl -s -X GET -H "Authorization: token $PAT_TOKEN" "https://api.github.com/repos/dubeywati/main/pulls?head=dubeywati-patch-166&state=open")
+          PR_NUMBER="${{ github.event.pull_request.number }}"
 
-          if [ "$(echo "$API_RESPONSE" | jq -r '.message')" = "Not Found" ]; then
-            echo "Error: Pull request not found."
-          else
-            PR_NUMBER=$(echo "$API_RESPONSE" | jq -r '.number')
-            echo "Found PR number: $PR_NUMBER"
-          fi
+          
 
           COMMENT="Your workflow failed. Here's why: Add your comment here."
           curl -s -X POST -H "Authorization: token $GH_PAT_TOKEN" -d "{\"body\":\"$COMMENT\"}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"
