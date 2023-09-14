@@ -81,7 +81,8 @@ jobs:
         env:
           GH_PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          PR_NUMBER=$(curl -s -X GET -H "Authorization: token $PAT_TOKEN" "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.head_ref }}&state=open" | jq -r '.[0].number')
+          PR_NUMBER=$(curl -s -X GET -H "Authorization: token $PAT_TOKEN" "https://api.github.com/repos/dubeywati/main/pulls?head=dubeywati-patch-163&state=open" | jq -r '.number')
+
           COMMENT="Your workflow failed. Here's why: Add your comment here."
           curl -s -X POST -H "Authorization: token $GH_PAT_TOKEN" -d "{\"body\":\"$COMMENT\"}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"
 
