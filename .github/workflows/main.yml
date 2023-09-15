@@ -38,7 +38,7 @@ jobs:
           client_payload: '{"branch_name":"${{ steps.vars.outputs.branch }}","PR_ISSUE_NUMBER": "${{ github.event.pull_request.number }}", "PR_REPO_OWNER": "${{ github.repository_owner }}", "PR_REPO_NAME": "${{  github.event.repository.name }}"}'
           trigger_workflow: true
           wait_workflow: true
-          comment_downstream_url: ${{ github.event.pull_request.comments_url }}
+          # comment_downstream_url: ${{ github.event.pull_request.comments_url }}
 
   build_Trail:
     runs-on: ubuntu-latest
@@ -74,7 +74,7 @@ jobs:
           propagate_failure: true
           trigger_workflow: true
           wait_workflow: true
-          comment_downstream_url: ${{ github.event.pull_request.comments_url }}
+          # comment_downstream_url: ${{ github.event.pull_request.comments_url }}
 
 
 
