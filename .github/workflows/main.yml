@@ -157,19 +157,18 @@ jobs:
           trigger_workflow: true
           wait_workflow: true
 
-# Add the following step at the end of your workflow
   comment_on_failure:
     needs: [build_LIVE, build_Trail]  # Wait for the other jobs to complete
     runs-on: ubuntu-latest
     if: failure()  # Only execute this step if any of the previous jobs fail
     env:
-      GH_PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      GH_PAT_TOKEN: ${{ secrets.PAT_TOKENS }}
     steps:
      - name: Extract Error Message
        id: extract_error_message
        run: |
           PR_NUMBER="${{ github.event.pull_request.number }}"
-          COMMENTS=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments")
+          COMMENTS=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKENS }}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments")
           ERROR_MESSAGE=""
           for COMMENT in $(echo "$COMMENTS" | jq -r '.[] | @base64'); do
             COMMENT_BODY=$(echo "$COMMENT" | base64 --decode | jq -r '.body')
@@ -179,8 +178,15 @@ jobs:
               break
             fi
           done
-          echo "::set-output name=error_message::$ERROR_MESSAGE"
+          echo "ERROR_MESSAGE=$ERROR_MESSAGE" >> $GITHUB_ENV
 
+     - name: Comment on PR on failure
+       run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          COMMENT=$(cat comment.txt)
+          curl -s -X POST -H "Authorization: token $GH_PAT_TOKEN" -d "{\"body\":\"$COMMENT\"}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"
+       env:
+          GH_PAT_TOKEN: ${{ secrets.PAT_TOKENS }}
 
 
 
