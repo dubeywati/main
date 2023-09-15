@@ -165,18 +165,21 @@ jobs:
     env:
       GH_PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
     steps:
-      - name: Combine Error Messages
-        run: |
-          LIVE_ERROR=$(echo "${{ steps.build_LIVE.outputs.client_payload }}" | jq -r '.error_message')
-          TRAIL_ERROR=$(echo "${{ steps.build_Trail.outputs.client_payload }}" | jq -r '.error_message')
-          COMMENT="Your workflow failed.\n\nLIVE ENV Error:\n$LIVE_ERROR\n\nTRAIL ENV Error:\n$TRAIL_ERROR"
-          echo "$COMMENT" > comment.txt
-      - name: Comment on PR on failure
-        run: |
+     - name: Extract Error Message
+       id: extract_error_message
+       run: |
           PR_NUMBER="${{ github.event.pull_request.number }}"
-          COMMENT=$(cat comment.txt)
-          curl -s -X POST -H "Authorization: token $GH_PAT_TOKEN" -d "{\"body\":\"$COMMENT\"}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"
-
+          COMMENTS=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments")
+          ERROR_MESSAGE=""
+          for COMMENT in $(echo "$COMMENTS" | jq -r '.[] | @base64'); do
+            COMMENT_BODY=$(echo "$COMMENT" | base64 --decode | jq -r '.body')
+            # Check if the comment contains an error message
+            if echo "$COMMENT_BODY" | grep -q '❌ Job Failures:'; then
+              ERROR_MESSAGE=$(echo "$COMMENT_BODY" | grep -A1 '❌ Job Failures:' | tail -n 1)
+              break
+            fi
+          done
+          echo "::set-output name=error_message::$ERROR_MESSAGE"
 
 
 
