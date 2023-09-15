@@ -122,7 +122,7 @@ jobs:
         with:
           owner: dubeywati
           repo: test
-          github_token: ${{ secrets.PAT_TOKEN }}
+          github_token: ${{ secrets.PAT_TOKENS }}
           github_user: dubeywati
           workflow_file_name: main.yml
           ref: feature
@@ -147,7 +147,7 @@ jobs:
         with:
           owner: dubeywati
           repo: test
-          github_token: ${{ secrets.PAT_TOKEN }}
+          github_token: ${{ secrets.PAT_TOKENS }}
           github_user: dubeywati
           workflow_file_name: trail.yml
           ref: feature
