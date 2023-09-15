@@ -109,12 +109,21 @@ jobs:
   build_LIVE:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR Branch
-        uses: actions/checkout@v2
+      - uses: mdecoleman/pr-branch-name@1.2.0
+        id: vars
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          repo-token: ${{ secrets.PAT_TOKEN }}
+      - run: echo ${{ steps.vars.outputs.branch }}
+      
+      - name: Checkout  
+        uses: actions/checkout@v1
+        with:
+          ref: ${{ steps.vars.outputs.branch }}
 
-      # Rest of your steps for build_LIVE job...
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x
 
       - name: Trigger Regression Tests for LIVE ENV
         id: live
@@ -122,24 +131,34 @@ jobs:
         with:
           owner: dubeywati
           repo: test
-          github_token: ${{ secrets.PAT_TOKENS }}
+          github_token: ${{ secrets.PAT_TOKEN }}
           github_user: dubeywati
           workflow_file_name: main.yml
           ref: feature
           wait_interval: 10
-          client_payload: '{"branch_name":"${{ github.event.pull_request.head.ref }}","PR_ISSUE_NUMBER": "${{ github.event.pull_request.number }}", "PR_REPO_OWNER": "${{ github.repository_owner }}", "PR_REPO_NAME": "${{ github.event.repository.name }}"}'
+          client_payload: '{"branch_name":"${{ steps.vars.outputs.branch }}","PR_ISSUE_NUMBER": "${{ github.event.pull_request.number }}", "PR_REPO_OWNER": "${{ github.repository_owner }}", "PR_REPO_NAME": "${{  github.event.repository.name }}"}'
           trigger_workflow: true
           wait_workflow: true
+          comment_downstream_url: ${{ github.event.pull_request.comments_url }}
 
   build_Trail:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR Branch
-        uses: actions/checkout@v2
+      - uses: mdecoleman/pr-branch-name@1.2.0
+        id: vars
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          repo-token: ${{ secrets.PAT_TOKEN }}
+      - run: echo ${{ steps.vars.outputs.branch }}
+      
+      - name: Checkout  
+        uses: actions/checkout@v1
+        with:
+          ref: ${{ steps.vars.outputs.branch }}
 
-      # Rest of your steps for build_Trail job...
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x
 
       - name: Trigger Regression Tests for Trail ENV
         id: trail
@@ -147,28 +166,28 @@ jobs:
         with:
           owner: dubeywati
           repo: test
-          github_token: ${{ secrets.PAT_TOKENS }}
+          github_token: ${{ secrets.PAT_TOKEN }}
           github_user: dubeywati
           workflow_file_name: trail.yml
           ref: feature
           wait_interval: 10
-          client_payload: '{"branch_name":"${{ github.event.pull_request.head.ref }}","PR_ISSUE_NUMBER": "${{ github.event.pull_request.number }}", "PR_REPO_OWNER": "${{ github.repository_owner }}", "PR_REPO_NAME": "${{ github.event.repository.name }}"}'
+          client_payload: '{"branch_name":"${{ steps.vars.outputs.branch }}","PR_ISSUE_NUMBER": "${{ github.event.pull_request.number }}", "PR_REPO_OWNER": "${{ github.repository_owner }}", "PR_REPO_NAME": "${{  github.event.repository.name }}"}'
           propagate_failure: true
           trigger_workflow: true
           wait_workflow: true
-
+          comment_downstream_url: ${{ github.event.pull_request.comments_url }}
   comment_on_failure:
     needs: [build_LIVE, build_Trail]  # Wait for the other jobs to complete
     runs-on: ubuntu-latest
     if: failure()  # Only execute this step if any of the previous jobs fail
     env:
-      GH_PAT_TOKEN: ${{ secrets.PAT_TOKENS }}
+      GH_PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
     steps:
      - name: Extract Error Message
        id: extract_error_message
        run: |
           PR_NUMBER="${{ github.event.pull_request.number }}"
-          COMMENTS=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKENS }}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments")
+          COMMENTS=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments")
           ERROR_MESSAGE=""
           for COMMENT in $(echo "$COMMENTS" | jq -r '.[] | @base64'); do
             COMMENT_BODY=$(echo "$COMMENT" | base64 --decode | jq -r '.body')
@@ -186,7 +205,7 @@ jobs:
           COMMENT=$(cat comment.txt)
           curl -s -X POST -H "Authorization: token $GH_PAT_TOKEN" -d "{\"body\":\"$COMMENT\"}" "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"
        env:
-          GH_PAT_TOKEN: ${{ secrets.PAT_TOKENS }}
+          GH_PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
 
 
 
